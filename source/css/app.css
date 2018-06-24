@@ -1,3 +1,32 @@
 .card {
     margin-top: 1em
 }
+
+.list-group-item:hover .btn-hidden {
+    opacity: 1;
+}
+
+.btn-hidden {
+    opacity: 0;
+}
+
+.btn-xs {
+    padding: 0.05rem 0.4rem;
+    font-size: .7875rem;
+    line-height: 1.5;
+    border-radius: .2rem;
+    transition: all 0.2s;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity .5s;
+}
+
+.fade-enter,
+.fade-leave-to
+/* .fade-leave-active below version 2.1.8 */
+
+    {
+    opacity: 0;
+}
