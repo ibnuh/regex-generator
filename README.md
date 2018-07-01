@@ -1,6 +1,8 @@
 # Regex Generator
 Simple web interface to generate regular expressions from a set of strings
 
+![Regex Generator Screenshot](screenshot.jpg)
+
 ## Web
 https://muhammadibnuh.com/regex-generator
 
