@@ -1,102 +1,34 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Regex Generator</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" type="text/css" media="screen" href="public/css/app.css" />
-        <link rel="apple-touch-icon" sizes="180x180" href="manifest/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="manifest/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="manifest/favicon-16x16.png">
-        <link rel="manifest" href="manifest/site.webmanifest">
-        <link rel="mask-icon" href="manifest/safari-pinned-tab.svg" color="#5bbad5">
-        <link rel="shortcut icon" href="manifest/favicon.ico">
-        <meta name="msapplication-TileColor" content="#da532c">
-        <meta name="msapplication-config" content="manifest/browserconfig.xml">
-        <meta name="theme-color" content="#ffffff">
-    </head>
-    <body>
-        <div id="app">
-            <nav class="navbar navbar-light navbar-laravel">
-                <div class="container">
-                    <a class="navbar-brand" href="/regex-generator">
-                    Regex Generator
-                    </a>
-                    <!-- Right Side Of Navbar -->
-                    <ul class="navbar-nav ml-auto">
-                        <!-- Authentication Links -->
-                        <li class="nav-item">
-                            <a href="https://github.com/ibnuh/regex-generator" class="nav-link">*github/ibnuh/regex-generator</a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <main class="py-4">
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-sm-12 col-md-10 col-lg-8">
-                            <transition name="fade">
-                                <div class="alert alert-danger" v-if="alert.displayed" v-text="alert.message"></div>
-                            </transition>
-                            <div class="card">
-                                <div class="card-header">Add String</div>
-                                <div class="card-body">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" v-model="input" @keyup.enter="pushString()" autofocus>
-                                        <div class="input-group-append">
-                                            <button class="btn btn-success" type="button" @click="pushString()">+</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-sm-12 col-md-10 col-lg-8" v-if="regex">
-                            <div class="card">
-                                <div class="card-header">Generated Regex</div>
-                                <div class="card-body">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" :value="regex" readonly>
-                                        <div class="input-group-append">
-                                            <button class="btn btn-danger" type="button" @click="reset()" title="Reset">↻</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-sm-12 col-md-10 col-lg-8" v-if="strings.length">
-                            <div class="card">
-                                <div class="card-header">Added Strings</div>
-                                <div class="card-body">
-                                    <ul class="list-group">
-                                        <template v-for="(string, index) in strings">
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                {{ string }}
-                                                <button class="btn btn-danger btn-xs btn-hidden" @click="removeString(index)">✖ Remove</button>
-                                            </li>
-                                        </template>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </main>
-        </div>
-        <script src="public/js/app.js"></script>
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-121324634-1"></script>
-        <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'UA-121324634-1');
-        </script>
-
-    </body>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Regex Generator - build regular expressions from examples</title>
+    <meta
+      name="description"
+      content="A free web tool that builds a regular expression from example strings. Add the strings you want to match and get a ready-to-use regex."
+    />
+    <link rel="canonical" href="https://ibnuhx.com/regex-generator" />
+    <meta property="og:title" content="Regex Generator - build regular expressions from examples" />
+    <meta
+      property="og:description"
+      content="A free web tool that builds a regular expression from example strings. Add the strings you want to match and get a ready-to-use regex."
+    />
+    <meta property="og:url" content="https://ibnuhx.com/regex-generator" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/regex-generator/manifest/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/regex-generator/manifest/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/regex-generator/manifest/favicon-16x16.png" />
+    <link rel="manifest" href="/regex-generator/manifest/site.webmanifest" />
+    <link rel="mask-icon" href="/regex-generator/manifest/safari-pinned-tab.svg" color="#0a0a0a" />
+    <link rel="shortcut icon" href="/regex-generator/manifest/favicon.ico" />
+    <meta name="msapplication-TileColor" content="#0a0a0a" />
+    <meta name="msapplication-config" content="/regex-generator/manifest/browserconfig.xml" />
+  </head>
+  <body class="bg-canvas text-ink antialiased">
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

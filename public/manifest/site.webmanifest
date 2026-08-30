@@ -1,0 +1,22 @@
+{
+  "name": "Regex Generator",
+  "short_name": "Regex Gen",
+  "description": "Build a regular expression from example strings.",
+  "start_url": "/regex-generator/",
+  "scope": "/regex-generator/",
+  "icons": [
+    {
+      "src": "/regex-generator/manifest/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/regex-generator/manifest/android-chrome-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a",
+  "display": "standalone"
+}
