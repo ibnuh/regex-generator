@@ -1,0 +1,212 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-canvas: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-2: #171717;
+  --color-ink: #f5f5f5;
+  --color-muted: rgb(255 255 255 / 56%);
+  --color-faint: rgb(255 255 255 / 36%);
+  --color-border: rgb(255 255 255 / 10%);
+  --color-border-strong: rgb(255 255 255 / 18%);
+  --color-hover: rgb(255 255 255 / 9%);
+  --color-pressed: rgb(255 255 255 / 14%);
+  --color-match: #86efac;
+  --color-match-bg: rgb(134 239 172 / 16%);
+  --color-danger: #fca5a5;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #app {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: rgb(255 255 255 / 18%);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(255 255 255 / 70%);
+    outline-offset: 2px;
+  }
+
+  /* Interactive affordances */
+  button,
+  [role='button'],
+  a,
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  input,
+  textarea,
+  select {
+    cursor: text;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'],
+  input[readonly],
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'] {
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 2.75rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25;
+    user-select: none;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease,
+      opacity 120ms ease,
+      transform 100ms ease;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    background: var(--color-ink);
+    color: var(--color-canvas);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.35;
+  }
+
+  .btn-secondary {
+    border: 1px solid var(--color-border-strong);
+    background: transparent;
+    color: var(--color-ink);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-hover);
+  }
+
+  .btn-ghost {
+    border: 0;
+    background: transparent;
+    color: var(--color-muted);
+    min-height: 2.25rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--color-hover);
+    color: var(--color-ink);
+  }
+
+  .btn-danger-ghost:hover:not(:disabled) {
+    background: var(--color-hover);
+    color: var(--color-danger);
+  }
+
+  .flag-chip {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--color-border);
+    padding: 0.25rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .flag-chip:hover {
+    background: var(--color-hover);
+    color: var(--color-ink);
+  }
+
+  .flag-chip[aria-pressed='true'] {
+    border-color: var(--color-border-strong);
+    background: var(--color-hover);
+    color: var(--color-ink);
+  }
+
+  .field {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-canvas);
+    padding: 0.65rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--color-ink);
+    transition: border-color 120ms ease;
+  }
+
+  .field::placeholder {
+    color: var(--color-faint);
+  }
+
+  .field:hover:not(:disabled):not(:focus) {
+    border-color: rgb(255 255 255 / 28%);
+  }
+
+  .field:focus {
+    border-color: rgb(255 255 255 / 42%);
+    outline: none;
+  }
+
+  .field-readonly {
+    cursor: text;
+  }
+
+  .field-readonly:focus {
+    border-color: rgb(255 255 255 / 42%);
+  }
+}

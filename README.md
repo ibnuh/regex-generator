@@ -1,26 +1,44 @@
 # Regex Generator
-A web tools to generate regular expressions from set of strings.
+
+A small web tool that builds a regular expression from example strings.
+
+**Live:** https://ibnuhx.com/regex-generator
 
 ![Regex Generator Screenshot](screenshot.jpg)
 
-## Web
-https://ibnuhx.com/regex-generator
+## What it does
+
+1. Add the strings you want to match (one per line).
+2. Get a compact regex that covers all of them.
+3. Toggle flags, copy the literal, and test it against sample text with live highlights.
+
+The pattern engine is [regexgen](https://github.com/devongovett/regexgen) by Devon Govett.
 
 ## Development
-```
-Clone the repository
-```
 
-```
+```bash
 npm install
+npm run dev
 ```
 
-```
-npm run prod
+```bash
+npm test
+npm run build
 ```
 
-## Credits
-regexgen package by [devongovett/regexgen](https://github.com/devongovett/regexgen)
+Production assets default to the `/regex-generator/` base path used on ibnuhx.com. For root hosting:
+
+```bash
+BASE_PATH=/ npm run build
+```
+
+## Stack
+
+- Vue 3
+- Vite 6
+- Tailwind CSS 4
+- Vitest
 
 ## License
+
 MIT
