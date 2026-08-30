@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import {
   compileRegex,
   formatLiteral,
@@ -11,12 +11,17 @@ import { findMatches, segmentText } from './lib/match.js'
 import { clearState, loadState, saveState } from './lib/storage.js'
 
 const FLAG_OPTIONS = [
-  { id: 'g', label: 'g', title: 'Global' },
+  { id: 'g', label: 'g', title: 'Global — find all matches' },
   { id: 'i', label: 'i', title: 'Ignore case' },
-  { id: 'm', label: 'm', title: 'Multiline' },
-  { id: 's', label: 's', title: 'Dotall' },
-  { id: 'u', label: 'u', title: 'Unicode' },
+  { id: 'm', label: 'm', title: 'Multiline — ^ and $ per line' },
+  { id: 's', label: 's', title: 'Dotall — . matches newlines' },
+  { id: 'u', label: 'u', title: 'Unicode mode' },
 ]
+
+const SAMPLE = {
+  examples: ['cat', 'car', 'cart'],
+  testText: 'the cat sat in the car near the cart',
+}
 
 const examples = ref([])
 const draft = ref('')
@@ -24,15 +29,29 @@ const flags = ref('g')
 const testText = ref('')
 const toast = ref('')
 const copyLabel = ref('Copy')
+const draftEl = ref(null)
 let toastTimer = 0
 let copyTimer = 0
 
+const canAdd = computed(() => splitInputLines(draft.value).length > 0)
+const hasWork = computed(
+  () => examples.value.length > 0 || testText.value.length > 0 || draft.value.length > 0,
+)
+
 onMounted(() => {
   const saved = loadState()
-  if (!saved) return
-  examples.value = saved.examples
-  flags.value = sanitizeFlags(saved.flags) || 'g'
-  testText.value = saved.testText
+  if (saved) {
+    examples.value = saved.examples
+    flags.value = sanitizeFlags(saved.flags) || 'g'
+    testText.value = saved.testText
+  }
+  window.addEventListener('keydown', onGlobalKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
+  window.clearTimeout(toastTimer)
+  window.clearTimeout(copyTimer)
 })
 
 watch(
@@ -83,9 +102,16 @@ function addFromDraft() {
   examples.value = next
   draft.value = ''
 
-  if (added && skipped) showToast(`Added ${added}, skipped ${skipped} duplicate${skipped === 1 ? '' : 's'}`)
-  else if (added > 1) showToast(`Added ${added} strings`)
-  else if (!added && skipped) showToast(skipped === 1 ? 'Already added' : 'All were already added')
+  if (added && skipped) {
+    showToast(`Added ${added}, skipped ${skipped} duplicate${skipped === 1 ? '' : 's'}`)
+  } else if (added > 1) {
+    showToast(`Added ${added} strings`)
+  } else if (!added && skipped) {
+    showToast(skipped === 1 ? 'Already added' : 'All were already added')
+  }
+
+  // Keep typing flow fast.
+  queueMicrotask(() => draftEl.value?.focus())
 }
 
 function removeAt(index) {
@@ -93,27 +119,47 @@ function removeAt(index) {
 }
 
 function clearAll() {
-  if (!examples.value.length && !testText.value && !draft.value) return
+  if (!hasWork.value) return
   if (!window.confirm('Clear examples, test text, and start over?')) return
   examples.value = []
   draft.value = ''
   testText.value = ''
   clearState()
   showToast('Cleared')
+  queueMicrotask(() => draftEl.value?.focus())
 }
 
-async function copyLiteral() {
-  if (!literal.value) return
+function loadSample() {
+  if (hasWork.value && !window.confirm('Replace current examples and test text with a sample?')) {
+    return
+  }
+  examples.value = [...SAMPLE.examples]
+  testText.value = SAMPLE.testText
+  draft.value = ''
+  flags.value = 'g'
+  showToast('Sample loaded')
+}
+
+async function copyText(text, okLabel = 'Copied') {
+  if (!text) return
   try {
-    await navigator.clipboard.writeText(literal.value)
-    copyLabel.value = 'Copied'
+    await navigator.clipboard.writeText(text)
+    copyLabel.value = okLabel
     window.clearTimeout(copyTimer)
     copyTimer = window.setTimeout(() => {
       copyLabel.value = 'Copy'
     }, 1600)
   } catch {
-    showToast('Could not copy')
+    showToast('Could not copy — select the field and copy manually')
   }
+}
+
+async function copyLiteral() {
+  await copyText(literal.value, 'Copied')
+}
+
+async function copyPatternOnly() {
+  await copyText(pattern.value, 'Pattern copied')
 }
 
 function toggleFlag(id) {
@@ -127,7 +173,24 @@ function onDraftKeydown(event) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
     addFromDraft()
+    return
   }
+  if (event.key === 'Escape' && draft.value) {
+    event.preventDefault()
+    draft.value = ''
+  }
+}
+
+function onGlobalKeydown(event) {
+  // Cmd/Ctrl+Enter adds from anywhere when draft has content.
+  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && canAdd.value) {
+    event.preventDefault()
+    addFromDraft()
+  }
+}
+
+function selectField(event) {
+  event.target.select?.()
 }
 </script>
 
@@ -142,14 +205,24 @@ function onDraftKeydown(event) {
           them.
         </p>
       </div>
-      <a
-        href="https://github.com/ibnuh/regex-generator"
-        class="shrink-0 rounded-md px-2 py-1 text-sm text-muted transition-colors hover:bg-hover hover:text-ink"
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        GitHub
-      </a>
+      <div class="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          title="Load a small cat/car/cart example"
+          @click="loadSample"
+        >
+          Try sample
+        </button>
+        <a
+          href="https://github.com/ibnuh/regex-generator"
+          class="btn btn-ghost"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          GitHub
+        </a>
+      </div>
     </header>
 
     <div
@@ -162,31 +235,45 @@ function onDraftKeydown(event) {
     </div>
 
     <section class="rounded-xl border border-border bg-surface p-4 sm:p-5">
-      <label for="examples-input" class="mb-2 block text-sm font-medium text-ink">
-        Example strings
-      </label>
-      <p class="mb-3 text-sm text-muted">
-        One per line. Press Enter to add, Shift+Enter for a new line.
-      </p>
+      <div class="mb-2 flex items-baseline justify-between gap-3">
+        <label for="examples-input" class="block text-sm font-medium text-ink">
+          Example strings
+        </label>
+        <span class="text-xs text-faint">Enter add · Shift+Enter newline</span>
+      </div>
+      <p class="mb-3 text-sm text-muted">One string per line. Duplicates are skipped.</p>
       <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch">
         <textarea
           id="examples-input"
+          ref="draftEl"
           v-model="draft"
           rows="3"
           autofocus
           spellcheck="false"
           placeholder="foo&#10;bar&#10;baz"
-          class="min-h-[5.5rem] w-full flex-1 resize-y rounded-lg border border-border-strong bg-canvas px-3 py-2.5 font-mono text-sm leading-relaxed text-ink placeholder:text-faint focus:border-ink/40"
+          class="field min-h-[5.5rem] flex-1 resize-y"
+          aria-describedby="examples-hint"
           @keydown="onDraftKeydown"
         />
         <button
           type="button"
-          class="h-11 shrink-0 rounded-lg bg-ink px-4 text-sm font-medium text-canvas transition-opacity hover:opacity-90 sm:h-auto sm:self-stretch sm:px-5"
+          class="btn btn-primary shrink-0 sm:min-w-[5.5rem] sm:self-stretch"
+          :disabled="!canAdd"
+          title="Add example strings (Enter)"
           @click="addFromDraft"
         >
           Add
         </button>
       </div>
+      <p id="examples-hint" class="mt-2 text-xs text-faint">
+        Tip: paste a list, or press
+        <kbd class="rounded border border-border px-1 py-0.5 font-mono text-[11px]">Ctrl</kbd>
+        /
+        <kbd class="rounded border border-border px-1 py-0.5 font-mono text-[11px]">⌘</kbd>
+        +
+        <kbd class="rounded border border-border px-1 py-0.5 font-mono text-[11px]">Enter</kbd>
+        from anywhere.
+      </p>
     </section>
 
     <section
@@ -200,7 +287,8 @@ function onDraftKeydown(event) {
         </h2>
         <button
           type="button"
-          class="rounded-md px-2 py-1 text-sm text-muted transition-colors hover:bg-hover hover:text-ink"
+          class="btn btn-ghost"
+          title="Clear examples and test text"
           @click="clearAll"
         >
           Clear all
@@ -210,19 +298,34 @@ function onDraftKeydown(event) {
         <li
           v-for="(item, index) in examples"
           :key="`${index}-${item}`"
-          class="group flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+          class="group flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
         >
-          <code class="min-w-0 flex-1 truncate font-mono text-sm text-ink">{{ item }}</code>
+          <code
+            class="min-w-0 flex-1 truncate font-mono text-sm text-ink"
+            :title="item"
+            >{{ item }}</code
+          >
           <button
             type="button"
-            class="rounded-md px-2 py-1 text-sm text-muted opacity-100 transition-colors hover:bg-hover hover:text-danger sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+            class="btn btn-ghost btn-danger-ghost min-h-10 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
             :aria-label="`Remove ${item}`"
+            title="Remove this example"
             @click="removeAt(index)"
           >
             Remove
           </button>
         </li>
       </ul>
+    </section>
+
+    <section
+      v-else
+      class="mt-4 rounded-xl border border-dashed border-border bg-surface/60 px-4 py-6 text-center sm:px-5"
+    >
+      <p class="text-sm text-muted">No examples yet. Add a few strings above, or</p>
+      <button type="button" class="btn btn-ghost mt-1 text-ink" @click="loadSample">
+        load a sample
+      </button>
     </section>
 
     <section
@@ -236,13 +339,9 @@ function onDraftKeydown(event) {
             v-for="opt in FLAG_OPTIONS"
             :key="opt.id"
             type="button"
-            class="min-w-9 rounded-md border px-2 py-1 font-mono text-xs transition-colors"
-            :class="
-              flags.includes(opt.id)
-                ? 'border-border-strong bg-hover text-ink'
-                : 'border-border text-muted hover:bg-hover hover:text-ink'
-            "
+            class="flag-chip"
             :title="opt.title"
+            :aria-label="opt.title"
             :aria-pressed="flags.includes(opt.id)"
             @click="toggleFlag(opt.id)"
           >
@@ -256,19 +355,35 @@ function onDraftKeydown(event) {
           :value="literal"
           readonly
           spellcheck="false"
-          class="w-full flex-1 rounded-lg border border-border-strong bg-canvas px-3 py-2.5 font-mono text-sm text-ink"
+          class="field field-readonly flex-1"
           aria-label="Generated regular expression"
-          @focus="$event.target.select()"
+          title="Click to select all"
+          @focus="selectField"
+          @click="selectField"
         />
         <button
           type="button"
-          class="h-11 shrink-0 rounded-lg border border-border-strong px-4 text-sm font-medium text-ink transition-colors hover:bg-hover sm:h-auto"
+          class="btn btn-secondary shrink-0 sm:min-w-[5.5rem]"
+          title="Copy full /pattern/flags literal"
           @click="copyLiteral"
         >
           {{ copyLabel }}
         </button>
       </div>
-      <p class="mt-2 font-mono text-xs text-faint">pattern only: {{ pattern }}</p>
+
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <p class="min-w-0 flex-1 truncate font-mono text-xs text-faint" :title="pattern">
+          pattern only: {{ pattern }}
+        </p>
+        <button
+          type="button"
+          class="btn btn-ghost min-h-8 shrink-0 text-xs"
+          title="Copy pattern without slashes or flags"
+          @click="copyPatternOnly"
+        >
+          Copy pattern
+        </button>
+      </div>
     </section>
 
     <section
@@ -277,7 +392,7 @@ function onDraftKeydown(event) {
     >
       <div class="mb-3 flex items-center justify-between gap-3">
         <h2 class="text-sm font-medium">Test against text</h2>
-        <p v-if="testText" class="text-sm text-muted">
+        <p v-if="testText" class="text-sm text-muted" aria-live="polite">
           {{ matchCount }} match{{ matchCount === 1 ? '' : 'es' }}
         </p>
       </div>
@@ -288,20 +403,25 @@ function onDraftKeydown(event) {
         rows="4"
         spellcheck="false"
         placeholder="Paste sample text to see matches highlight live"
-        class="mb-3 w-full resize-y rounded-lg border border-border-strong bg-canvas px-3 py-2.5 font-mono text-sm leading-relaxed text-ink placeholder:text-faint"
+        class="field mb-3 resize-y"
       />
       <div
         v-if="testText"
         class="min-h-[3rem] whitespace-pre-wrap break-words rounded-lg border border-border bg-canvas px-3 py-2.5 font-mono text-sm leading-relaxed"
         aria-live="polite"
       >
-        <template v-for="(seg, i) in segments" :key="i">
-          <mark
-            v-if="seg.type === 'match'"
-            class="rounded-sm bg-match-bg px-0.5 text-match"
-            >{{ seg.value }}</mark
-          >
-          <span v-else>{{ seg.value }}</span>
+        <template v-if="matchCount === 0">
+          <span class="text-faint">No matches in this text.</span>
+        </template>
+        <template v-else>
+          <template v-for="(seg, i) in segments" :key="i">
+            <mark
+              v-if="seg.type === 'match'"
+              class="rounded-sm bg-match-bg px-0.5 text-match"
+              >{{ seg.value }}</mark
+            >
+            <span v-else>{{ seg.value }}</span>
+          </template>
         </template>
       </div>
     </section>
