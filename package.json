@@ -21,11 +21,11 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
-    "@vitejs/plugin-vue": "^5.2.1",
+    "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.5.0",
     "happy-dom": "^20.12.0",
     "tailwindcss": "^4.0.0",
-    "vite": "^6.0.3",
-    "vitest": "^3.2.7"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }
